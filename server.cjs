@@ -2,284 +2,571 @@ const http = require("http");
 
 const PORT = process.env.PORT || 3000;
 
+
+/*
+ * WINDY FREE AIRCRAFT TRACKER PROXY
+ *
+ * Veri kaynağı:
+ * adsb.fi
+ *
+ * Windy -> Render -> adsb.fi
+ */
+
+
 const server = http.createServer(async (req, res) => {
 
-    // CORS
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-    res.setHeader("Cache-Control", "no-store");
+    /*
+     * CORS
+     * Windy tarayıcısının bu sunucuya
+     * erişebilmesi için gerekli.
+     */
+    res.setHeader(
+        "Access-Control-Allow-Origin",
+        "*"
+    );
 
+    res.setHeader(
+        "Access-Control-Allow-Methods",
+        "GET, OPTIONS"
+    );
+
+    res.setHeader(
+        "Access-Control-Allow-Headers",
+        "Content-Type"
+    );
+
+    res.setHeader(
+        "Cache-Control",
+        "no-store"
+    );
+
+
+    /*
+     * CORS preflight
+     */
     if (req.method === "OPTIONS") {
+
         res.writeHead(204);
         res.end();
+
         return;
     }
 
+
+    /*
+     * Sadece GET
+     */
     if (req.method !== "GET") {
-        sendJSON(res, 405, {
-            found: false,
-            message: "Sadece GET destekleniyor."
-        });
+
+        sendJSON(
+            res,
+            405,
+            {
+                found: false,
+                message:
+                    "Sadece GET destekleniyor."
+            }
+        );
+
         return;
     }
+
 
     try {
 
-        const requestURL = new URL(
-            req.url,
-            `http://${req.headers.host}`
-        );
+        const requestURL =
+            new URL(
+                req.url,
+                `http://${req.headers.host}`
+            );
 
-        // Render ana adresi kontrolü
+
+        /*
+         * Ana adres:
+         *
+         * /
+         *
+         * Render servisinin ayakta
+         * olduğunu kontrol eder.
+         */
         if (requestURL.pathname === "/") {
 
-            sendJSON(res, 200, {
-                status: "ok",
-                service: "windy-aircraft-tracker-free"
-            });
+            sendJSON(
+                res,
+                200,
+                {
+                    status: "ok",
+                    service:
+                        "windy-aircraft-tracker-free",
+
+                    source:
+                        "adsb.fi"
+                }
+            );
 
             return;
         }
 
-        // Uçak sorgusu:
-        // /aircraft?callsign=THY6TU
-        if (requestURL.pathname !== "/aircraft") {
 
-            sendJSON(res, 404, {
-                found: false,
-                message: "Endpoint bulunamadı."
-            });
+        /*
+         * Uçak sorgusu:
+         *
+         * /aircraft?callsign=THY6TU
+         */
+        if (
+            requestURL.pathname !==
+            "/aircraft"
+        ) {
+
+            sendJSON(
+                res,
+                404,
+                {
+                    found: false,
+                    message:
+                        "Endpoint bulunamadı."
+                }
+            );
 
             return;
         }
 
-        const callsign = (
-            requestURL.searchParams.get("callsign") || ""
-        )
-            .trim()
-            .toUpperCase();
+
+        /*
+         * Callsign
+         */
+        const callsign =
+            (
+                requestURL
+                    .searchParams
+                    .get("callsign")
+                ||
+                ""
+            )
+                .trim()
+                .toUpperCase();
 
 
         if (!callsign) {
 
-            sendJSON(res, 400, {
-                found: false,
-                message: "Callsign gerekli."
-            });
-
-            return;
-        }
-
-
-        if (!/^[A-Z0-9_-]{2,15}$/.test(callsign)) {
-
-            sendJSON(res, 400, {
-                found: false,
-                message: "Geçersiz callsign."
-            });
+            sendJSON(
+                res,
+                400,
+                {
+                    found: false,
+                    message:
+                        "Callsign gerekli."
+                }
+            );
 
             return;
         }
 
 
         /*
-         * OpenSky canlı state vectors
+         * Basit callsign güvenlik kontrolü
          */
-        const response = await fetch(
-            "https://opensky-network.org/api/states/all",
-            {
-                headers: {
-                    "Accept": "application/json",
-                    "User-Agent":
-                        "windy-aircraft-tracker-free/1.0"
+        if (
+            !/^[A-Z0-9_-]{2,15}$/
+                .test(callsign)
+        ) {
+
+            sendJSON(
+                res,
+                400,
+                {
+                    found: false,
+                    message:
+                        "Geçersiz callsign."
                 }
-            }
+            );
+
+            return;
+        }
+
+
+        /*
+         * adsb.fi
+         *
+         * Örnek:
+         *
+         * https://opendata.adsb.fi/api/v2/callsign/THY6TU
+         */
+        const apiURL =
+            "https://opendata.adsb.fi" +
+            "/api/v2/callsign/" +
+            encodeURIComponent(callsign);
+
+
+        console.log(
+            `[ADSB.FI] Request: ${callsign}`
         );
 
 
-        if (!response.ok) {
+        /*
+         * 15 saniyelik timeout.
+         *
+         * Render bağlantısı takılırsa
+         * sonsuza kadar beklemesin.
+         */
+        const controller =
+            new AbortController();
 
-            sendJSON(res, 502, {
-                found: false,
-                message:
-                    `OpenSky HTTP ${response.status}`
-            });
 
-            return;
+        const timeout =
+            setTimeout(
+                () => controller.abort(),
+                15000
+            );
+
+
+        let response;
+
+
+        try {
+
+            response =
+                await fetch(
+                    apiURL,
+                    {
+                        method: "GET",
+
+                        headers: {
+                            "Accept":
+                                "application/json",
+
+                            "User-Agent":
+                                "windy-aircraft-tracker-free/1.0"
+                        },
+
+                        signal:
+                            controller.signal
+                    }
+                );
+
+        }
+
+        finally {
+
+            clearTimeout(timeout);
         }
 
 
-        const data = await response.json();
-
-        const states =
-            Array.isArray(data.states)
-                ? data.states
-                : [];
+        console.log(
+            `[ADSB.FI] HTTP ${response.status}`
+        );
 
 
         /*
-         * OpenSky state vector:
-         *
-         * 0  = ICAO24
-         * 1  = Callsign
-         * 2  = Country
-         * 5  = Longitude
-         * 6  = Latitude
-         * 7  = Barometric altitude (m)
-         * 8  = On ground
-         * 9  = Velocity (m/s)
-         * 10 = True track (degrees)
-         * 11 = Vertical rate (m/s)
-         * 13 = Geometric altitude (m)
-         * 14 = Squawk
+         * adsb.fi HTTP hatası
          */
-        const state = states.find((item) => {
+        if (!response.ok) {
 
-            if (!Array.isArray(item)) {
-                return false;
-            }
-
-            const flight =
-                String(item[1] || "")
-                    .trim()
-                    .toUpperCase();
-
-            return flight === callsign;
-        });
+            const errorText =
+                await response
+                    .text()
+                    .catch(() => "");
 
 
-        if (!state) {
+            console.error(
+                `[ADSB.FI] Error:`,
+                response.status,
+                errorText
+            );
 
-            sendJSON(res, 200, {
-                found: false,
-                message:
-                    `${callsign} şu anda OpenSky verisinde bulunamadı.`
-            });
+
+            sendJSON(
+                res,
+                502,
+                {
+                    found: false,
+
+                    message:
+                        `adsb.fi HTTP ${response.status}`
+                }
+            );
 
             return;
         }
+
+
+        /*
+         * JSON cevabı
+         */
+        const data =
+            await response.json();
+
+
+        /*
+         * adsb.fi formatı:
+         *
+         * {
+         *     "ac": [
+         *         {...}
+         *     ],
+         *     "total": 1
+         * }
+         */
+        const raw =
+            Array.isArray(data.ac)
+                ? data.ac[0]
+                : null;
+
+
+        /*
+         * Callsign bulunamadı
+         */
+        if (!raw) {
+
+            sendJSON(
+                res,
+                200,
+                {
+                    found: false,
+
+                    message:
+                        `${callsign} şu anda adsb.fi verisinde bulunamadı.`
+                }
+            );
+
+            return;
+        }
+
+
+        /*
+         * Pozisyon
+         */
+        const lat =
+            numberOrNull(raw.lat);
 
 
         const lon =
-            numberOrNull(state[5]);
-
-        const lat =
-            numberOrNull(state[6]);
+            numberOrNull(raw.lon);
 
 
-        const altitudeMeters =
-            numberOrNull(state[7]) ??
-            numberOrNull(state[13]);
+        if (
+            lat === null ||
+            lon === null
+        ) {
 
+            sendJSON(
+                res,
+                200,
+                {
+                    found: false,
 
-        const velocityMS =
-            numberOrNull(state[9]);
-
-
-        const track =
-            numberOrNull(state[10]);
-
-
-        const verticalMS =
-            numberOrNull(state[11]);
-
-
-        if (lat === null || lon === null) {
-
-            sendJSON(res, 200, {
-                found: false,
-                message:
-                    `${callsign} bulundu fakat güncel pozisyonu yok.`
-            });
+                    message:
+                        `${callsign} bulundu fakat güncel pozisyonu yok.`
+                }
+            );
 
             return;
         }
 
 
         /*
-         * Birim dönüşümleri
+         * İrtifa
          *
-         * metre -> ft
-         * m/s   -> knot
-         * m/s   -> ft/min
+         * Öncelik:
+         * alt_baro
+         *
+         * Yedek:
+         * alt_geom
+         *
+         * adsb.fi zaten feet verir.
          */
         const altitudeFt =
-            altitudeMeters !== null
-                ? altitudeMeters * 3.280839895
-                : null;
+            numberOrNull(
+                raw.alt_baro
+            )
+            ??
+            numberOrNull(
+                raw.alt_geom
+            );
 
 
+        /*
+         * Ground speed
+         *
+         * adsb.fi -> knot
+         */
         const groundSpeedKt =
-            velocityMS !== null
-                ? velocityMS * 1.943844492
-                : null;
+            numberOrNull(
+                raw.gs
+            );
 
 
+        /*
+         * Track
+         *
+         * derece
+         */
+        const trackDeg =
+            numberOrNull(
+                raw.track
+            );
+
+
+        /*
+         * Vertical speed
+         *
+         * Öncelik:
+         * baro_rate
+         *
+         * Yedek:
+         * geom_rate
+         *
+         * adsb.fi -> ft/min
+         */
         const verticalSpeedFpm =
-            verticalMS !== null
-                ? verticalMS * 196.850394
-                : null;
+            numberOrNull(
+                raw.baro_rate
+            )
+            ??
+            numberOrNull(
+                raw.geom_rate
+            );
 
 
-        sendJSON(res, 200, {
+        /*
+         * Windy plugin'e sade veri
+         */
+        const aircraft = {
 
-            found: true,
+            callsign:
+                String(
+                    raw.flight ||
+                    callsign
+                )
+                    .trim(),
 
-            aircraft: {
+            icao24:
+                raw.hex || null,
 
-                callsign:
-                    String(state[1] || callsign)
-                        .trim(),
+            registration:
+                raw.r || null,
 
-                icao24:
-                    state[0] || null,
+            aircraft_type:
+                raw.t || null,
 
-                country:
-                    state[2] || null,
+            description:
+                raw.desc || null,
 
-                lat: lat,
+            lat:
+                lat,
 
-                lon: lon,
+            lon:
+                lon,
 
-                altitude_ft:
-                    altitudeFt,
+            altitude_ft:
+                altitudeFt,
 
-                ground_speed_kt:
-                    groundSpeedKt,
+            ground_speed_kt:
+                groundSpeedKt,
 
-                track_deg:
-                    track,
+            track_deg:
+                trackDeg,
 
-                vertical_speed_fpm:
-                    verticalSpeedFpm,
+            vertical_speed_fpm:
+                verticalSpeedFpm,
 
-                on_ground:
-                    state[8] === true,
+            squawk:
+                raw.squawk || null,
 
-                squawk:
-                    state[14] || null,
+            emergency:
+                raw.emergency || null,
 
-                timestamp:
-                    Date.now()
+            seen_seconds:
+                numberOrNull(
+                    raw.seen
+                ),
+
+            seen_position_seconds:
+                numberOrNull(
+                    raw.seen_pos
+                ),
+
+            source:
+                "adsb.fi",
+
+            timestamp:
+                Date.now()
+        };
+
+
+        console.log(
+            `[ADSB.FI] Found ${aircraft.callsign}`,
+            aircraft.lat,
+            aircraft.lon
+        );
+
+
+        /*
+         * Başarılı cevap
+         */
+        sendJSON(
+            res,
+            200,
+            {
+                found: true,
+                aircraft: aircraft
             }
-        });
+        );
 
     }
 
     catch (error) {
 
-        console.error(error);
+        console.error(
+            "[PROXY ERROR]",
+            error
+        );
 
-        sendJSON(res, 500, {
-            found: false,
-            message:
-                "OpenSky verisi alınırken sunucu hatası oluştu."
-        });
+
+        /*
+         * Timeout / abort
+         */
+        if (
+            error &&
+            error.name ===
+                "AbortError"
+        ) {
+
+            sendJSON(
+                res,
+                504,
+                {
+                    found: false,
+
+                    message:
+                        "adsb.fi bağlantısı zaman aşımına uğradı."
+                }
+            );
+
+            return;
+        }
+
+
+        /*
+         * Diğer sunucu hataları
+         */
+        sendJSON(
+            res,
+            500,
+            {
+                found: false,
+
+                message:
+                    "ADS-B verisi alınırken sunucu hatası oluştu."
+            }
+        );
     }
 });
 
 
+/*
+ * Güvenli number kontrolü
+ */
 function numberOrNull(value) {
 
     return (
@@ -291,14 +578,24 @@ function numberOrNull(value) {
 }
 
 
-function sendJSON(res, status, data) {
+/*
+ * JSON cevap yardımcısı
+ */
+function sendJSON(
+    res,
+    status,
+    data
+) {
 
-    res.statusCode = status;
+    res.statusCode =
+        status;
+
 
     res.setHeader(
         "Content-Type",
         "application/json; charset=utf-8"
     );
+
 
     res.end(
         JSON.stringify(data)
@@ -306,9 +603,21 @@ function sendJSON(res, status, data) {
 }
 
 
-server.listen(PORT, "0.0.0.0", () => {
+/*
+ * Render PORT değerini otomatik verir.
+ * Bilgisayarda ise 3000 kullanılır.
+ */
+server.listen(
+    PORT,
+    "0.0.0.0",
+    () => {
 
-    console.log(
-        `Windy ADS-B proxy running on port ${PORT}`
-    );
-});
+        console.log(
+            `Windy ADS-B proxy running on port ${PORT}`
+        );
+
+        console.log(
+            "ADS-B source: adsb.fi"
+        );
+    }
+);
