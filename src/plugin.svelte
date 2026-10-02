@@ -1,5 +1,5 @@
 <div class="plugin__mobile-header">
-    âœˆï¸ Ãœcretsiz UÃ§ak Takip
+    ✈ Ücretsiz Uçak Takip
 </div>
 
 <section class="plugin__content">
@@ -16,7 +16,7 @@
                 on:click={startTracking}
                 disabled={loading}
             >
-                {loading ? "AranÄ±yor..." : "Takip Et"}
+                {loading ? "Aranıyor..." : "Takip Et"}
             </button>
         </div>
 
@@ -31,7 +31,7 @@
 
                 <div class="title">
                     <strong>
-                        âœˆï¸ {aircraft.callsign}
+                        ✈ {aircraft.callsign}
                     </strong>
 
                     {#if aircraft.registration}
@@ -42,34 +42,34 @@
                 </div>
 
                 <div class="row">
-                    <span>Ä°rtifa</span>
+                    <span>İrtifa</span>
                     <b>{formatNumber(aircraft.altitude_ft, " ft")}</b>
                 </div>
 
                 <div class="row">
-                    <span>Yer hÄ±zÄ±</span>
+                    <span>Yer hızı</span>
                     <b>{formatNumber(aircraft.ground_speed_kt, " kt")}</b>
                 </div>
 
                 <div class="row">
-                    <span>YÃ¶n</span>
+                    <span>Yön</span>
                     <b>{formatTrack(aircraft.track_deg)}</b>
                 </div>
 
                 <div class="row">
-                    <span>Dikey hÄ±z</span>
+                    <span>Dikey hız</span>
                     <b>{formatVerticalSpeed(aircraft.vertical_speed_fpm)}</b>
                 </div>
 
                 {#if aircraft.aircraft_type}
                     <div class="row">
-                        <span>UÃ§ak</span>
+                        <span>Uçak</span>
                         <b>{aircraft.aircraft_type}</b>
                     </div>
                 {/if}
 
                 <div class="live">
-                    â— CANLI ADS-B â€¢ 10 sn
+                    ● CANLI ADS-B • 10 sn
                 </div>
 
             </div>
@@ -93,7 +93,7 @@
 
 
     /*
-     * GerÃ§ek ADS-B sorgusu:
+     * Gerçek ADS-B sorgusu:
      * 10 saniyede bir.
      */
     const UPDATE_INTERVAL =
@@ -101,23 +101,23 @@
 
 
     /*
-     * Ä°ki gerÃ§ek pozisyon arasÄ±nda
-     * akÄ±cÄ± hareket sÃ¼resi.
+     * İki gerçek pozisyon arasında
+     * akıcı hareket süresi.
      */
     const ANIMATION_DURATION =
         9500;
 
 
     /*
-     * Ä°z ne sÄ±klÄ±kta gÃ¼ncellensin.
+     * İz ne sıklıkta güncellensin.
      */
     const TRAIL_UPDATE_INTERVAL =
         200;
 
 
     /*
-     * PNG artÄ±k import edilmiyor.
-     * localhost:9999 dist klasÃ¶rÃ¼nÃ¼
+     * PNG artık import edilmiyor.
+     * localhost:9999 dist klasörünü
      * servis ediyor.
      */
     const AIRCRAFT_ICON_URL =
@@ -178,7 +178,7 @@
 
 
     /*
-     * CALLSIGN TEMÄ°ZLE
+     * CALLSIGN TEMİZLE
      */
     function cleanCallsign(
         value: string
@@ -207,18 +207,18 @@
 
 
     /*
-     * UÃ‡AK Ä°KONU
+     * UÇAK İKONU
      *
-     * PNG'nin burnu yukarÄ± bakÄ±yor.
+     * PNG'nin burnu yukarı bakıyor.
      *
      * ADS-B:
-     * 0Â°   = KUZEY
-     * 90Â°  = DOÄU
-     * 180Â° = GÃœNEY
-     * 270Â° = BATI
+     * 0°   = KUZEY
+     * 90°  = DOÄU
+     * 180° = GÜNEY
+     * 270° = BATI
      *
-     * Bu yÃ¼zden track aÃ§Ä±sÄ±nÄ±
-     * doÄŸrudan kullanÄ±yoruz.
+     * Bu yüzden track açısını
+     * doğrudan kullanıyoruz.
      */
     function createAircraftIcon(
         track: number,
@@ -267,7 +267,7 @@
 
 
             /*
-             * GerÃ§ek ADS-B koordinatÄ±
+             * Gerçek ADS-B koordinatı
              * marker kutusunun merkezi.
              */
             iconAnchor:
@@ -277,7 +277,7 @@
 
 
     /*
-     * AKTÄ°F ANÄ°MASYONU DURDUR
+     * AKTİF ANİMASYONU DURDUR
      */
     function stopAnimation() {
 
@@ -334,14 +334,14 @@
 
 
         /*
-         * Ä°z uÃ§ak ikonunun altÄ±nda.
+         * İz uçak ikonunun altında.
          */
         trailLine.bringToBack();
     }
 
 
     /*
-     * Ä°ZE YENÄ° NOKTA EKLE
+     * İZE YENİ NOKTA EKLE
      */
     function addTrailPoint(
         lat: number,
@@ -368,7 +368,7 @@
 
 
         /*
-         * AynÄ± koordinatÄ± gereksiz
+         * Aynı koordinatı gereksiz
          * yere tekrar ekleme.
          */
         if (
@@ -435,7 +435,7 @@
 
 
         /*
-         * UÃ§ak aynÄ± konumdaysa.
+         * Uçak aynı konumdaysa.
          */
         if (
             Math.abs(deltaLat) < 0.0000001
@@ -514,8 +514,8 @@
 
 
             /*
-             * Ä°z de uÃ§akla beraber
-             * canlÄ± ÅŸekilde uzar.
+             * İz de uçakla beraber
+             * canlı şekilde uzar.
              */
             if (
                 now -
@@ -602,7 +602,7 @@
 
 
         /*
-         * Ä°LK POZÄ°SYON
+         * İLK POZİSYON
          */
         if (!aircraftMarker) {
 
@@ -627,7 +627,7 @@
 
 
             /*
-             * Ä°z tam burada baÅŸlar.
+             * İz tam burada başlar.
              */
             createTrail(
                 data.lat,
@@ -636,8 +636,8 @@
 
 
             /*
-             * HaritayÄ± yalnÄ±zca ilk
-             * pozisyonda uÃ§aÄŸa gÃ¶tÃ¼r.
+             * Haritayı yalnızca ilk
+             * pozisyonda uçağa götür.
              */
             if (
                 firstPosition
@@ -663,7 +663,7 @@
 
         /*
          * Yeni ADS-B heading/track
-         * deÄŸerine gÃ¶re PNG'yi dÃ¶ndÃ¼r.
+         * değerine göre PNG'yi döndür.
          */
         aircraftMarker.setIcon(
             createAircraftIcon(
@@ -674,8 +674,8 @@
 
 
         /*
-         * Yeni gerÃ§ek pozisyona
-         * yumuÅŸak hareket.
+         * Yeni gerçek pozisyona
+         * yumuşak hareket.
          */
         animateMarker(
             data.lat,
@@ -685,7 +685,7 @@
 
 
     /*
-     * CANLI VERÄ°YÄ° AL
+     * CANLI VERİYİ AL
      */
     async function fetchAircraft() {
 
@@ -698,7 +698,7 @@
         if (!wanted) {
 
             error =
-                "LÃ¼tfen bir callsign yaz.";
+                "Lütfen bir callsign yaz.";
 
             return;
         }
@@ -717,7 +717,7 @@
 
 
             /*
-             * Render hata cevabÄ±.
+             * Render hata cevabı.
              */
             if (!response.ok) {
 
@@ -753,7 +753,7 @@
 
 
             /*
-             * UÃ§ak bulunamadÄ±.
+             * Uçak bulunamadı.
              */
             if (
                 !data.found
@@ -763,7 +763,7 @@
 
                 error =
                     data.message ||
-                    `${wanted} ÅŸu anda bulunamadÄ±.`;
+                    `${wanted} şu anda bulunamadı.`;
 
                 return;
             }
@@ -799,7 +799,7 @@
             ) {
 
                 error =
-                    `${wanted} bulundu fakat gÃ¼ncel konumu yok.`;
+                    `${wanted} bulundu fakat güncel konumu yok.`;
 
                 return;
             }
@@ -843,7 +843,7 @@
 
 
             error =
-                "CanlÄ± ADS-B verisi alÄ±namadÄ±.";
+                "Canlı ADS-B verisi alınamadı.";
         }
     }
 
@@ -862,7 +862,7 @@
         if (!wanted) {
 
             error =
-                "LÃ¼tfen bir callsign yaz.";
+                "Lütfen bir callsign yaz.";
 
             return;
         }
@@ -902,7 +902,7 @@
 
 
         /*
-         * Eski uÃ§ak.
+         * Eski uçak.
          */
         if (
             aircraftMarker
@@ -944,7 +944,7 @@
 
 
         /*
-         * Ä°lk veriyi hemen al.
+         * İlk veriyi hemen al.
          */
         await fetchAircraft();
 
@@ -955,7 +955,7 @@
 
         /*
          * 10 saniyede bir
-         * gerÃ§ek ADS-B gÃ¼ncellemesi.
+         * gerçek ADS-B güncellemesi.
          */
         timer =
             setInterval(
@@ -984,7 +984,7 @@
             ? `${Math.round(n)
                 .toLocaleString("tr-TR")}${suffix}`
 
-            : "â€”";
+            : "—";
     }
 
 
@@ -1005,7 +1005,7 @@
             !Number.isFinite(n)
         ) {
 
-            return "â€”";
+            return "—";
         }
 
 
@@ -1013,12 +1013,12 @@
             ((n % 360) + 360) % 360;
 
 
-        return `${Math.round(normalized)}Â°`;
+        return `${Math.round(normalized)}°`;
     }
 
 
     /*
-     * DÄ°KEY HIZ
+     * DİKEY HIZ
      */
     function formatVerticalSpeed(
         value: any
@@ -1034,7 +1034,7 @@
             !Number.isFinite(n)
         ) {
 
-            return "â€”";
+            return "—";
         }
 
 
@@ -1049,7 +1049,7 @@
         ) {
 
             return (
-                `â†‘ ${rounded.toLocaleString("tr-TR")} ft/min`
+                `↑ ${rounded.toLocaleString("tr-TR")} ft/min`
             );
         }
 
@@ -1059,7 +1059,7 @@
         ) {
 
             return (
-                `â†“ ${Math.abs(rounded).toLocaleString("tr-TR")} ft/min`
+                `↓ ${Math.abs(rounded).toLocaleString("tr-TR")} ft/min`
             );
         }
 
@@ -1076,7 +1076,7 @@
 
 
     /*
-     * PLUGIN KAPANIRSA TEMÄ°ZLE
+     * PLUGIN KAPANIRSA TEMİZLE
      */
     onDestroy(() => {
 
@@ -1302,7 +1302,7 @@
 
 
     /*
-     * LEAFLET'Ä°N KENDÄ°
+     * LEAFLET'İN KENDİ
      * MARKER ARKA PLANINI KALDIR.
      */
     :global(.aircraft-marker-wrapper) {
@@ -1337,8 +1337,8 @@
     /*
      * AKINCI.PNG
      *
-     * GerÃ§ek koordinat tam olarak
-     * uÃ§aÄŸÄ±n merkezidir.
+     * Gerçek koordinat tam olarak
+     * uçağın merkezidir.
      */
     :global(.aircraft-plane-image) {
 
@@ -1425,7 +1425,7 @@
 
 
     /*
-     * MOBÄ°L
+     * MOBİL
      */
     @media (
         max-width: 700px

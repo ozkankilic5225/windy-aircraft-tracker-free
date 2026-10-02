@@ -2,7 +2,7 @@ import type { ExternalPluginConfig } from '@windy/interfaces';
 
 const config: ExternalPluginConfig = {
     name: 'windy-plugin-aircraft-tracker-free',
-    version: '1.0.3',
+    version: '1.0.4',
     icon: '✈',
     title: 'Uçak Takip Sistemi',
     description: 'ADS-B verileriyle canlı uçak takip eklentisi.',
