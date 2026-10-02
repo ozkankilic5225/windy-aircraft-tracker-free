@@ -1,16 +1,16 @@
 import type { ExternalPluginConfig } from '@windy/interfaces';
 
 const config: ExternalPluginConfig = {
-    name: 'windy-plugin-my-plugin',
-    version: '0.1.0',
-    icon: '🔌',
-    title: 'This is my first plugin',
-    description: 'This is my first plugin.',
-    author: 'John Doe (optional company name)',
+    name: 'windy-plugin-aircraft-tracker-free',
+    version: '1.0.0',
+    icon: '✈️',
+    title: 'Ücretsiz Uçak Takip',
+    description: 'Açık ADS-B verileriyle canlı uçak takip eklentisi.',
+    author: 'Ozkan Kilic',
     repository: 'https://github.com/windycom/windy-plugin-template',
     desktopUI: 'rhpane',
-    mobileUI: 'fullscreen',
-    routerPath: '/my-plugin',
+    mobileUI: 'small',
+    routerPath: '/aircraft-tracker-free',
     private: true,
 };
 
