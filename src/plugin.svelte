@@ -8,7 +8,7 @@
         <div class="search">
             <input
                 bind:value={callsign}
-                placeholder="Ã–rn. AKINCI1453"
+                placeholder="Örn. AKINCI1453"
                 on:keydown={(e) => e.key === "Enter" && startTracking()}
             />
 
